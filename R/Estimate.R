@@ -1053,23 +1053,25 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set values for length of discrete/continuous outcomes  
   remove_list <- .remove_nas(Y_int,
                              Y_cont,
-                             discrete=idealdata@score_matrix$discrete,
+                             discrete = idealdata@score_matrix$discrete,
                              legispoints,
                              billpoints,
                              timepoints,
                              modelpoints,
                              ordered_id,
                              idealdata,
-                             time_ind=as.array(time_ind),
-                             time_proc=vary_ideal_pts,
-                             ar_sd=ar_sd,
-                             gp_sd_par=gp_sd_par,
-                             num_diff=gp_num_diff,
-                             m_sd_par=gp_m_sd_par,
-                             min_length=gp_min_length,
-                             const_type=switch(const_type,
-                                               persons=1L,
-                                               items=2L),
+                             time_ind = as.array(time_ind),
+                             time_proc = vary_ideal_pts,
+                             ar_sd = ar_sd,
+                             gp_sd_par = gp_sd_par,
+                             num_diff = gp_num_diff,
+                             m_sd_par = gp_m_sd_par,
+                             min_length = gp_min_length,
+                             const_type = switch(
+                               const_type,
+                               persons=1L,
+                               items=2L
+                             ),
                              discrim_reg_sd=discrim_reg_sd,
                              discrim_miss_sd=discrim_miss_sd,
                              diff_reg_sd=diff_reg_sd,
@@ -1085,8 +1087,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # need to create new data if map_rect is in operation 
   # and we have missing values / ragged arrays
   
-  out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
-                             remove_nas=remove_list$remove_nas)
+  out_list <- .make_sum_vals(
+    idealdata@score_matrix,
+    map_over_id,
+    use_groups=use_groups,
+    remove_nas=remove_list$remove_nas
+  )
   
   sum_vals <- out_list$sum_vals
   
@@ -1098,10 +1104,16 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(het_var) {
     
-    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
+    num_var <- length(
+      unique(
+        remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]
+      )
+    )
     
-    mod_items <- tibble(model_id=remove_list$modelpoints,
-                        item_id=remove_list$billpoints) %>% 
+    mod_items <- tibble(
+      model_id=remove_list$modelpoints,
+      item_id=remove_list$billpoints
+    ) %>% 
       distinct
     
     mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
@@ -1206,7 +1218,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
                     num_ls=remove_list$num_ls,
-                    num_bills_grm=remove_list$num_bills_grm,
+                    #num_bills_grm=remove_list$num_bills_grm,
                     ll=remove_list$legispoints[out_list$this_data$orig_order],
                     bb=remove_list$billpoints[out_list$this_data$orig_order],
                     mm=remove_list$modelpoints[out_list$this_data$orig_order],
@@ -1395,7 +1407,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
                     num_ls=remove_list$num_ls,
-                    num_bills_grm=remove_list$num_bills_grm,
+                    #num_bills_grm=remove_list$num_bills_grm,
                     ll=remove_list$legispoints[out_list$this_data$orig_order],
                     bb=remove_list$billpoints[out_list$this_data$orig_order],
                     mm=remove_list$modelpoints[out_list$this_data$orig_order],
