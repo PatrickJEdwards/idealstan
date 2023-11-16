@@ -118,21 +118,30 @@
    
     
     if(aggregate) {
-      person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+      person_params <- person_params %>% 
+        gather(key = legis, value = ideal_pts) %>% 
         group_by(legis) %>% 
-        summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
-                  median_pt=median(ideal_pts)) %>% 
-        mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
-               param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
-               time_point=stringr::str_extract(legis,'\\[[0-9]+'),
-               time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+        summarize(
+          low_pt = quantile(ideal_pts, low_limit, na.rm = TRUE),
+          high_pt = quantile(ideal_pts, high_limit, na.rm = TRUE),
+          median_pt = median(ideal_pts)
+        ) %>% 
+        mutate(
+          param_id=stringr::str_extract(legis,'[0-9]+\\]'),
+          param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+          time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+          time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+'))
+        )
     } else {
-      person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+      person_params <- person_params %>% 
+        gather(key = legis,value=ideal_pts) %>% 
         group_by(legis) %>% 
-        mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
-               param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
-               time_point=stringr::str_extract(legis,'\\[[0-9]+'),
-               time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+        mutate(
+          param_id=stringr::str_extract(legis,'[0-9]+\\]'),
+          param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+          time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+          time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+'))
+        )
     }
 
     # get ids out 
@@ -200,8 +209,11 @@
     if(aggregate) {
       person_params <-  person_params %>% 
         group_by(legis) %>% 
-        summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
-                  median_pt=median(ideal_pts)) %>% 
+        summarize(
+          low_pt = quantile(ideal_pts, low_limit, na.rm = TRUE),
+          high_pt = quantile(ideal_pts, high_limit, na.rm = TRUE),
+          median_pt = median(ideal_pts)
+        ) %>% 
         left_join(person_ids,by=c(legis='long_name'))
     } else {
       person_params <-  person_params %>% 
