@@ -984,7 +984,7 @@
     reg_data_diff <- lapply(1:ncol(cuts[-grep("^\\.", colnames(cuts))]), function(c) {
       
       # NOT SURE IF THIS SHOULD HAVE `reg_diff` IN IT:
-      reg_diff_fixed <- reg_diff+cuts[[1]]
+      reg_diff_fixed <- reg_diff+cuts[[c]]
       
       reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff_fixed,0.5),
                                   `High Posterior Interval`=quantile(reg_diff_fixed,high_limit),
