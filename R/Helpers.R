@@ -876,19 +876,39 @@
 
   # figure out how many categories we need
   
-  total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
+  ## NEW `total_cat` CODE:
+  ## I interpret this as the number of unique response categories in the dataframe. I changed it so that it obtains this number from the score_matrix.
+  total_cat <- unique(object@score_data@score_matrix[object@score_data@score_matrix$item_id == param_name,]$ordered_id)
   
-  cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))
   
+  ## OLD `total_cat` CODE:
+  #total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
+  
+  ## NEW `cuts` CODE:
+  ## Notice that it subtracts 1 from total_cat. This is because it includes the 'missing' category
+  cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm', total_cat, '[', param_num, ',', 1:(total_cat - 1), ']')))
+  
+  ## OLD `cuts` CODE:
+  #cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))
+  
+  ## NEW `cut_names` CODE:
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)[levels(object@score_data@score_matrix$outcome_disc) != "Missing"] # MODIFIED TO REMOVE "Missing"
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
+  
+  ## OLD `cut_names` CODE:
+  #if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+  #  cut_names <- levels(object@score_data@score_matrix$outcome_disc)
+  #} else {
+  #  cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
+  #}
+  
   abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
   
-  reg_data <- lapply(1:ncol(cuts), function(c) {
+  reg_data <- lapply(1:ncol(cuts[-grep("^\\.", colnames(cuts))]), function(c) {
     reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
     
     
@@ -919,7 +939,9 @@
     
     # need to loop over cuts
     
-    reg_data <- lapply(1:ncol(cuts), function(c) {
+    reg_data <- lapply(1:ncol(cuts[-grep("^\\.", colnames(cuts))]), function(c) {
+      
+      # NOT SURE IF THIS SHOULD HAVE `reg_diff` IN IT:
       reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
       
       reg_data <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
@@ -955,12 +977,32 @@
                                    `Predicted Outcome`='Missing',
                                    `Parameter`=param_name)
     
-    reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
-                                `High Posterior Interval`=quantile(reg_diff,high_limit),
-                                `Low Posterior Interval`=quantile(reg_diff,low_limit),
-                                `Item Type`='Non-Inflated Difficulty',
-                                `Predicted Outcome`=cut_names[2],
-                                `Parameter`=param_name)
+    
+    ## The cut points ARE the response category-specific difficulty parameters!!!!!!!!
+    
+    ## NEW DIFFICULTY PARAMETER ESTIMATES:
+    reg_data_diff <- lapply(1:ncol(cuts[-grep("^\\.", colnames(cuts))]), function(c) {
+      
+      # NOT SURE IF THIS SHOULD HAVE `reg_diff` IN IT:
+      reg_diff_fixed <- reg_diff+cuts[[1]]
+      
+      reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff_fixed,0.5),
+                                  `High Posterior Interval`=quantile(reg_diff_fixed,high_limit),
+                                  `Low Posterior Interval`=quantile(reg_diff_fixed,low_limit),
+                                  `Item Type`='Non-Inflated Difficulty',
+                                  `Predicted Outcome`=cut_names[c],
+                                  `Parameter`=param_name)
+      
+      return(reg_data_diff)
+    }) %>% bind_rows
+    
+    ## OLD DIFFICULTY PARAMETER ESTIMATES:
+    #reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
+    #                            `High Posterior Interval`=quantile(reg_diff,high_limit),
+    #                            `Low Posterior Interval`=quantile(reg_diff,low_limit),
+    #                            `Item Type`='Non-Inflated Difficulty',
+    #                            `Predicted Outcome`=cut_names[2],
+    #                            `Parameter`=param_name)
     
     abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
                                 `High Posterior Interval`=quantile(abs_discrim,high_limit),
@@ -1527,7 +1569,7 @@ return(as.vector(idx))
 #' Function to figure out how to remove missing values from
 #' data before running models.
 #' @noRd
-.remove_nas <- function( Y_int=NULL,
+.remove_nas <- function(Y_int=NULL,
                         Y_cont=NULL,
                         discrete=NULL,
                         legispoints=NULL,
